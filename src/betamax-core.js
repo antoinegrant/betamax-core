@@ -1,8 +1,8 @@
 class BetaMaxCore {
   static version = '3.0.0';
 
-  constructor(options) {
-    this.renderer = options.renderer;
+  constructor(renderer) {
+    this.renderer = renderer;
   }
 
   get version() {

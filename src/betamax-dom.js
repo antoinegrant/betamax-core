@@ -2,9 +2,9 @@ class BetaMaxDom {
   static version = '3.0.0';
   static type = 'DOM';
 
-  constructor($media, mediaUrl) {
-    this.$media = $media;
-    this.mediaUrl = mediaUrl;
+  constructor(condig) {
+    this.$media = condig.$media;
+    this.mediaUrl = condig.mediaUrl;
     this.mode = /\.mp3/.test(this.mediaUrl) ? 'AUDIO' : 'VIDEO';
   }
 
