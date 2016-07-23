@@ -6,7 +6,7 @@
   "scripts": {
     "republish": "babel --presets es2015,es2016 --plugins 'transform-es2015-modules-umd','transform-class-properties' ./src --out-dir ./dist",
     "bundle": "webpack",
-    "serve": "webpack-dev-server",
+    "serve": "webpack-dev-server --content-base demo/",
     "dev": "npm run serve"
   },
   "repository": {

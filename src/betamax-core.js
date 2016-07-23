@@ -31,9 +31,9 @@ class BetaMaxCore {
     console.log('Get the event in core', evt.type);
     this.renderer.onLoadMedia();
   };
-  onPlay        = (eventName, evt) => console.log('Get the event in core', evt.type);
-  onPause       = (eventName, evt) => console.log('Get the event in core', evt.type);
-  onProgress    = (eventName, evt) => console.log('Get the event in core', evt.type);
+  onPlay        = (eventName, evt) => console.log(`Get the event in core for ${evt.rendererMode}: ${evt.type}`);
+  onPause       = (eventName, evt) => console.log(`Get the event in core for ${evt.rendererMode}: ${evt.type}`);
+  onProgress    = (eventName, evt) => console.log(`Get the event in core for ${evt.rendererMode}: ${evt.type}`);
 
   render() {
     this.bindEvents();

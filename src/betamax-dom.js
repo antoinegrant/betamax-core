@@ -2,8 +2,10 @@ class BetaMaxDom {
   static version = '3.0.0';
   static type = 'DOM';
 
-  constructor($el) {
-    this.$media = $el;
+  constructor($media, mediaUrl) {
+    this.$media = $media;
+    this.mediaUrl = mediaUrl;
+    this.mode = /\.mp3/.test(this.mediaUrl) ? 'AUDIO' : 'VIDEO';
   }
 
   get version() {
@@ -35,6 +37,7 @@ class BetaMaxDom {
       this.eventsListeners[eventName].forEach((callback) => callback(eventName, {
         type: evt.type,
         timeStamp: evt.timeStamp,
+        rendererMode: this.mode
       }));
     }
   }
@@ -47,7 +50,7 @@ class BetaMaxDom {
 
   onLoadMedia() {
     console.log('onLoadMedia');
-    this.$media.setAttribute('src', 'https://vp.nyt.com/video/2015/07/07/33763_1_out-there-pluto_wg_480p.mp4');
+    this.$media.setAttribute('src', this.mediaUrl);
   }
 
   render() {
