@@ -3,6 +3,7 @@ class BetaMaxCore {
 
   constructor(renderer) {
     this.renderer = renderer;
+    this.middlewares = [];
   }
 
   get version() {
@@ -20,20 +21,47 @@ class BetaMaxCore {
     return this._renderer = renderer;
   }
 
-  bindEvents() {
-    this.renderer.on(this.renderer.events.BEFORE_LOAD, this.onBeforeLoad);
-    this.renderer.on(this.renderer.events.PLAY, this.onPlay);
-    this.renderer.on(this.renderer.events.PAUSE, this.onPause);
-    this.renderer.on(this.renderer.events.PROGRESS, this.onProgress);
+  use(middleware) {
+    this.middlewares.push(middleware);
+    return this;
   }
 
-  onBeforeLoad  = (eventName, evt) => {
+  runEventThroughMiddlewares(eventName, evt) {
+    let preventEvents = [];
+    this.middlewares.every(middleware => {
+      if (!middleware.call(this, eventName, evt)) {
+        preventEvents.push(eventName);
+      }
+    });
+    return preventEvents;
+  }
+
+  bindEvents() {
+    for (var eventName in this.renderer.events) {
+      if (typeof this[`on_${eventName.toLowerCase()}`] === 'function') {
+        this.renderer.on(this.renderer.events[eventName], this[`on_${eventName.toLowerCase()}`]);
+      }
+    }
+  }
+
+  on_before_load = (eventName, evt) => {
     console.log('Get the event in core', evt.type);
-    this.renderer.onLoadMedia();
+    let preventEvents = this.runEventThroughMiddlewares(eventName, evt);
+    if (preventEvents.indexOf(eventName) === -1) {
+      this.renderer.onLoadMedia();
+    }
   };
-  onPlay        = (eventName, evt) => console.log(`Get the event in core for ${evt.rendererMode}: ${evt.type}`);
-  onPause       = (eventName, evt) => console.log(`Get the event in core for ${evt.rendererMode}: ${evt.type}`);
-  onProgress    = (eventName, evt) => console.log(`Get the event in core for ${evt.rendererMode}: ${evt.type}`);
+  on_play = (eventName, evt) => {
+    console.log(`Get the event in core for ${evt.rendererMode}: ${evt.type}`);
+    this.runEventThroughMiddlewares(eventName, evt);
+  };
+  on_pause = (eventName, evt) => {
+    console.log(`Get the event in core for ${evt.rendererMode}: ${evt.type}`);
+    this.runEventThroughMiddlewares(eventName, evt);
+  };
+  on_progress = (eventName, evt) => {
+    console.log(`Get the event in core for ${evt.rendererMode}: ${evt.type}`);
+  };
 
   render() {
     this.bindEvents();
@@ -41,4 +69,12 @@ class BetaMaxCore {
   }
 }
 
-export { BetaMaxCore as default, BetaMaxCore };
+const BetaMaxCoreFactory = (renderer) => {
+  const betaMaxCore = new BetaMaxCore(renderer);
+  return {
+    use: betaMaxCore.use.bind(betaMaxCore),
+    render: betaMaxCore.render.bind(betaMaxCore),
+  };
+};
+
+export { BetaMaxCoreFactory as default, BetaMaxCoreFactory };

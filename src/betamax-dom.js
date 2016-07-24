@@ -2,10 +2,12 @@ class BetaMaxDom {
   static version = '3.0.0';
   static type = 'DOM';
 
-  constructor(condig) {
-    this.$media = condig.$media;
-    this.mediaUrl = condig.mediaUrl;
-    this.mode = /\.mp3/.test(this.mediaUrl) ? 'AUDIO' : 'VIDEO';
+  constructor({ $media, mediaUrl }) {
+    this.state = {
+      $media,
+      mediaUrl,
+    };
+    this.mode = /\.mp3/.test(this.state.mediaUrl) ? 'AUDIO' : 'VIDEO';
   }
 
   get version() {
@@ -43,14 +45,14 @@ class BetaMaxDom {
   }
 
   bindMediaEvents() {
-    this.$media.addEventListener('play', (evt) => this.trigger(this.events.PLAY, evt));
-    this.$media.addEventListener('pause', (evt) => this.trigger(this.events.PAUSE, evt));
-    this.$media.addEventListener('progress', (evt) => this.trigger(this.events.PROGRESS, evt));
+    this.state.$media.addEventListener('play', (evt) => this.trigger(this.events.PLAY, evt));
+    this.state.$media.addEventListener('pause', (evt) => this.trigger(this.events.PAUSE, evt));
+    this.state.$media.addEventListener('progress', (evt) => this.trigger(this.events.PROGRESS, evt));
   }
 
   onLoadMedia() {
     console.log('onLoadMedia');
-    this.$media.setAttribute('src', this.mediaUrl);
+    this.state.$media.setAttribute('src', this.state.mediaUrl);
   }
 
   render() {
@@ -58,7 +60,7 @@ class BetaMaxDom {
       type: 'vhs-dom-custom'
     });
     this.bindMediaEvents();
-    this.$media.setAttribute('controls', true);
+    this.state.$media.setAttribute('controls', true);
     return this;
   }
 

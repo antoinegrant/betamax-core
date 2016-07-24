@@ -1,13 +1,16 @@
 import BetaMaxCore from './betamax-core';
 import BetaMaxDom from './betamax-dom';
 import BetaMaxFoo from './betamax-foo';
+import FooMiddleware from './middleware/foo-middleware';
 
 const betamaxVideo = new BetaMaxCore(
   new BetaMaxDom({
     $media: document.querySelector('#video-example'),
     mediaUrl: 'https://vp.nyt.com/video/2015/07/07/33763_1_out-there-pluto_wg_480p.mp4'
   })
-).render();
+)
+betamaxVideo.use(FooMiddleware);
+betamaxVideo.render();
 
 const betamaxAudio = new BetaMaxCore(
   new BetaMaxDom({
