@@ -23,7 +23,8 @@ class BetaMaxDom {
       BEFORE_LOAD: 'before_load',
       PLAY: 'play',
       PAUSE: 'pause',
-      PROGRESS: 'progress'
+      PROGRESS: 'progress',
+      ENDED: 'ended',
     }
   }
 
@@ -48,10 +49,13 @@ class BetaMaxDom {
     this.state.$media.addEventListener('play', (evt) => this.trigger(this.events.PLAY, evt));
     this.state.$media.addEventListener('pause', (evt) => this.trigger(this.events.PAUSE, evt));
     this.state.$media.addEventListener('progress', (evt) => this.trigger(this.events.PROGRESS, evt));
+    this.state.$media.addEventListener('progress', (evt) => this.trigger(this.events.PROGRESS, evt));
+    this.state.$media.addEventListener('ended', (evt) => this.trigger(this.events.ENDED, evt));
   }
 
   onLoadMedia() {
-    console.log('onLoadMedia');
+    console.log('onLoadMedia', this.state.mediaUrl);
+    this.state.$media.setAttribute('autoplay', true);
     this.state.$media.setAttribute('src', this.state.mediaUrl);
   }
 
@@ -60,7 +64,6 @@ class BetaMaxDom {
       type: 'vhs-dom-custom'
     });
     this.bindMediaEvents();
-    this.state.$media.setAttribute('controls', true);
     return this;
   }
 

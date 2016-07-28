@@ -1,20 +1,15 @@
-import BetaMaxCore from './betamax-core';
-import BetaMaxDom from './betamax-dom';
-import BetaMaxFoo from './betamax-foo';
-import FooMiddleware from './middleware/foo-middleware';
+import BetaMaxPlayerHTML from './betamax-player-html';
 
-const betamaxVideo = new BetaMaxCore(
-  new BetaMaxDom({
-    $media: document.querySelector('#video-example'),
-    mediaUrl: 'https://vp.nyt.com/video/2015/07/07/33763_1_out-there-pluto_wg_480p.mp4'
-  })
-)
-betamaxVideo.use(FooMiddleware);
-betamaxVideo.render();
+const videoPlayer = new BetaMaxPlayerHTML({
+  $media: document.querySelector('#video-example'),
+  mediaUrl: 'http://localhost:3000/33763_1_out-there-pluto_wg_480p.mp4'
+});
 
-const betamaxAudio = new BetaMaxCore(
-  new BetaMaxDom({
-    $media: document.querySelector('#audio-example'),
-    mediaUrl: 'http://podcasts.nytimes.com/podcasts/2008/03/21/25healthupdate.mp3'
-  })
-).render();
+videoPlayer.render();
+
+const audioPlayer = new BetaMaxPlayerHTML({
+  $media: document.querySelector('#audio-example'),
+  mediaUrl: 'http://localhost:3000/25healthupdate.mp3'
+});
+
+audioPlayer.render();

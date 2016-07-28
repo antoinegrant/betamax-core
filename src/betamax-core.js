@@ -15,9 +15,13 @@ class BetaMaxCore {
   }
 
   set renderer(renderer) {
+    if (this.hasRenderer) {
+      throw new Error('Cannot set the renderer a second time.');
+    }
     if (!renderer.type || renderer.type === '' || typeof renderer.render !== 'function') {
       throw new Error('The renderer signature is not conform.');
     }
+    this.hasRenderer = true;
     return this._renderer = renderer;
   }
 
@@ -27,44 +31,53 @@ class BetaMaxCore {
   }
 
   runEventThroughMiddlewares(eventName, evt) {
-    let preventEvents = [];
-    this.middlewares.every(middleware => {
-      if (!middleware.call(this, eventName, evt)) {
-        preventEvents.push(eventName);
-      }
+    this.middlewareContext = this.middlewareContext || {};
+    return this.middlewares.every(middleware => {
+      this.middlewareContext[middleware] = this.middlewareContext[middleware] || {};
+      this.middlewareContext[middleware] = Object.assign(this.middlewareContext[middleware], {
+        renderer: this.renderer,
+        setState: this.setState
+      });
+      middleware.call(this.middlewareContext[middleware], eventName, evt);
     });
-    return preventEvents;
   }
 
   bindEvents() {
     for (var eventName in this.renderer.events) {
-      if (typeof this[`on_${eventName.toLowerCase()}`] === 'function') {
-        this.renderer.on(this.renderer.events[eventName], this[`on_${eventName.toLowerCase()}`]);
-      }
+      this.renderer.on(this.renderer.events[eventName], this.on.bind(this));
     }
   }
 
-  on_before_load = (eventName, evt) => {
-    console.log('Get the event in core', evt.type);
-    let preventEvents = this.runEventThroughMiddlewares(eventName, evt);
-    if (preventEvents.indexOf(eventName) === -1) {
+  on(eventName, evt) {
+    console.log(`Get the event in core for ${evt.rendererMode}: ${evt.type}`);
+    this.runEventThroughMiddlewares(eventName, evt);
+  }
+
+  setInitState(newState) {
+    let state = Object.assign({}, this.renderer.state);
+    this.renderer.state = {};
+    this.setState(state);
+  }
+
+  setState(newState) {
+    console.warn("STATE CHANGE", newState);
+    let prevState = Object.assign({}, this.renderer.state);
+    this.renderer.state = Object.assign(this.renderer.state, newState);
+
+    if (prevState.mediaUrl !== newState.mediaUrl) {
       this.renderer.onLoadMedia();
     }
-  };
-  on_play = (eventName, evt) => {
-    console.log(`Get the event in core for ${evt.rendererMode}: ${evt.type}`);
-    this.runEventThroughMiddlewares(eventName, evt);
-  };
-  on_pause = (eventName, evt) => {
-    console.log(`Get the event in core for ${evt.rendererMode}: ${evt.type}`);
-    this.runEventThroughMiddlewares(eventName, evt);
-  };
-  on_progress = (eventName, evt) => {
-    console.log(`Get the event in core for ${evt.rendererMode}: ${evt.type}`);
-  };
+
+    return this.renderer.state;
+  }
 
   render() {
+    if (this.isMounted) {
+      throw new Error('BetaMax has mounted already.');
+    }
+    this.isMounted = true;
     this.bindEvents();
+    this.setInitState(this.renderer.state);
     this.renderer.render();
   }
 }

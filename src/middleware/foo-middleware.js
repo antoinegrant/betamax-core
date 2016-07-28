@@ -1,19 +1,21 @@
-const fooMiddleware = function(eventName, evt, core) {
-  console.log(`middleware eventName: ${eventName}`);
-  console.log(`middleware evt:`, evt);
-  console.log(`middleware core:`, this);
+const fooMiddleware = function(eventName, evt) {
 
   if (eventName === this.renderer.events.BEFORE_LOAD) {
-    console.warn("*** Track the BEFORE_LOAD event");
-    // this.setState({
-    //   mediaUrl: 'https://vp.nyt.com/video/2016/07/23/41649_1_24munich-witnesses_wg_360p.mp4',
-    //   config: {
-    //     autoplay: true
-    //   }
-    // });
-    this.renderer.state.mediaUrl = 'https://vp.nyt.com/video/2016/07/23/41649_1_24munich-witnesses_wg_360p.mp4';
-    this.renderer.state.$media.setAttribute('autoplay', true);
-    this.renderer.onLoadMedia();
+    this.prevState = Object.assign({}, this.renderer.state);
+
+    this.setState({
+      isAd: true,
+      mediaUrl: 'http://localhost:3000/ad.mp4',
+    });
+
+    return false;
+  } else if (eventName === this.renderer.events.ENDED) {
+
+    this.setState({
+      isAd: false,
+      mediaUrl: this.prevState.mediaUrl,
+    });
+
     return false;
   }
 
