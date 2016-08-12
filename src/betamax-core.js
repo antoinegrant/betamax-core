@@ -4,6 +4,7 @@ class BetaMaxCore {
   constructor(renderer) {
     this.renderer = renderer;
     this.middlewares = [];
+    this.logEnabled = false;
   }
 
   get version() {
@@ -27,7 +28,6 @@ class BetaMaxCore {
 
   use(middleware) {
     this.middlewares.push(middleware);
-    return this;
   }
 
   runEventThroughMiddlewares(eventName, evt) {
@@ -36,39 +36,71 @@ class BetaMaxCore {
       this.middlewareContext[middleware] = this.middlewareContext[middleware] || {};
       this.middlewareContext[middleware] = Object.assign(this.middlewareContext[middleware], {
         renderer: this.renderer,
-        setState: this.setState
+        setState: this.setState.bind(this)
       });
-      middleware.call(this.middlewareContext[middleware], eventName, evt);
+      return middleware.call(this.middlewareContext[middleware], eventName, evt);
     });
   }
 
   bindEvents() {
     for (var eventName in this.renderer.events) {
-      this.renderer.on(this.renderer.events[eventName], this.on.bind(this));
+      this.renderer.on(this.renderer.events[eventName], this.trigger.bind(this));
     }
   }
 
-  on(eventName, evt) {
-    console.log(`Get the event in core for ${evt.rendererMode}: ${evt.type}`);
+  trigger(eventName, evt) {
+    if (this.logEnabled) console.log(`Get the event in core for ${evt.rendererMode}: ${evt.type}`);
+    switch (eventName) {
+      case 'play':
+        this.setState({ stop: false, ended: false, play: true, pause: false, timeStamp: evt.timeStamp });
+        break;
+      case 'pause':
+        this.setState({ stop: false, ended: false, play: false, pause: true, timeStamp: evt.timeStamp });
+        break;
+      case 'timeupdate':
+        this.setState({ stop: false, ended: false, play: true, pause: false, timeStamp: evt.timeStamp });
+        break;
+      case 'ended':
+        this.setState({ stop: true, ended: true, play: false, pause: false, timeStamp: 0 });
+        break;
+      default:
+
+    }
     this.runEventThroughMiddlewares(eventName, evt);
   }
 
   setInitState(newState) {
-    let state = Object.assign({}, this.renderer.state);
+    let state = Object.assign({}, newState);
     this.renderer.state = {};
     this.setState(state);
   }
 
   setState(newState) {
-    console.warn("STATE CHANGE", newState);
     let prevState = Object.assign({}, this.renderer.state);
     this.renderer.state = Object.assign(this.renderer.state, newState);
 
-    if (prevState.mediaUrl !== newState.mediaUrl) {
+    if (this.logEnabled) console.warn("STATE CHANGE", prevState, newState);
+
+    if (!!newState.mediaUrl && prevState.mediaUrl !== newState.mediaUrl) {
+      this.renderer.state.ended = false;
+      this.renderer.state.timeStamp = 0;
       this.renderer.onLoadMedia();
     }
 
+    this.triggerStateChange(this.renderer.state);
+
     return this.renderer.state;
+  }
+
+  onStateChange(callback) {
+    if (typeof callback !== 'function') return;
+    this.stateChangeCallback = this.stateChangeCallback || [];
+    this.stateChangeCallback.push(callback);
+  }
+
+  triggerStateChange(state) {
+    if (this.stateChangeCallback && this.stateChangeCallback.length > 0)
+      this.stateChangeCallback.forEach(callback => callback(state));
   }
 
   render() {
@@ -87,6 +119,7 @@ const BetaMaxCoreFactory = (renderer) => {
   return {
     use: betaMaxCore.use.bind(betaMaxCore),
     render: betaMaxCore.render.bind(betaMaxCore),
+    onStateChange: betaMaxCore.onStateChange.bind(betaMaxCore),
   };
 };
 
