@@ -1,126 +1,107 @@
+import BetaMaxMediaAPI from './betamax-media-api'
+import { formatTime } from './betamax-utils'
+
 class BetaMaxCore {
-  static version = '3.0.0';
 
-  constructor(renderer) {
-    this.renderer = renderer;
-    this.middlewares = [];
-    this.logEnabled = false;
+  constructor({ $mediaObj }) {
+    // validate the options
+    this.eventsListeners = this.eventsListeners || {}
+    this.mediaAPI = this.getMediaAPI($mediaObj)
+    this.state = this.mediaAPI.getState()
+    this.bindEvents()
   }
 
-  get version() {
-    return VHSCore.version;
-  }
-
-  get renderer() {
-    return this._renderer;
-  }
-
-  set renderer(renderer) {
-    if (this.hasRenderer) {
-      throw new Error('Cannot set the renderer a second time.');
+  get events() {
+    return {
+      BEFORE_LOAD: 'before_load',
+      PLAY: 'play',
+      PAUSE: 'pause',
+      TIME_UPDATE: 'timeupdate',
+      ENDED: 'ended',
+      VOLUME_CHANGE: 'volumechange'
     }
-    if (!renderer.type || renderer.type === '' || typeof renderer.render !== 'function') {
-      throw new Error('The renderer signature is not conform.');
+  }
+
+  getMediaAPI($mediaObj) {
+    let type
+    switch ($mediaObj.tagName.toLowerCase()) {
+      case 'audio':
+        type = 'audio'
+        break
+      default:
+        type = 'video'
     }
-    this.hasRenderer = true;
-    return this._renderer = renderer;
-  }
-
-  use(middleware) {
-    this.middlewares.push(middleware);
-  }
-
-  runEventThroughMiddlewares(eventName, evt) {
-    this.middlewareContext = this.middlewareContext || {};
-    return this.middlewares.every(middleware => {
-      this.middlewareContext[middleware] = this.middlewareContext[middleware] || {};
-      this.middlewareContext[middleware] = Object.assign(this.middlewareContext[middleware], {
-        renderer: this.renderer,
-        setState: this.setState.bind(this)
-      });
-      return middleware.call(this.middlewareContext[middleware], eventName, evt);
-    });
+    return new BetaMaxMediaAPI({ type, $mediaObj, events: this.events })
   }
 
   bindEvents() {
-    for (var eventName in this.renderer.events) {
-      this.renderer.on(this.renderer.events[eventName], this.trigger.bind(this));
-    }
-  }
-
-  trigger(eventName, evt) {
-    if (this.logEnabled) console.log(`Get the event in core for ${evt.rendererMode}: ${evt.type}`);
-    switch (eventName) {
-      case 'play':
-        this.setState({ stop: false, ended: false, play: true, pause: false, timeStamp: evt.timeStamp });
-        break;
-      case 'pause':
-        this.setState({ stop: false, ended: false, play: false, pause: true, timeStamp: evt.timeStamp });
-        break;
-      case 'timeupdate':
-        this.setState({ stop: false, ended: false, play: true, pause: false, timeStamp: evt.timeStamp });
-        break;
-      case 'ended':
-        this.setState({ stop: true, ended: true, play: false, pause: false, timeStamp: 0 });
-        break;
-      default:
-
-    }
-    this.runEventThroughMiddlewares(eventName, evt);
-  }
-
-  setInitState(newState) {
-    let state = Object.assign({}, newState);
-    this.renderer.state = {};
-    this.setState(state);
+    this.mediaAPI.addEventListener(this.events.PLAY, this.setState.bind(this))
+    this.mediaAPI.addEventListener(this.events.PAUSE, this.setState.bind(this))
+    this.mediaAPI.addEventListener(this.events.STOP, this.setState.bind(this))
+    this.mediaAPI.addEventListener(this.events.TIME_UPDATE, this.setState.bind(this))
+    this.mediaAPI.addEventListener(this.events.VOLUME_CHANGE, this.setState.bind(this))
   }
 
   setState(newState) {
-    let prevState = Object.assign({}, this.renderer.state);
-    this.renderer.state = Object.assign(this.renderer.state, newState);
-
-    if (this.logEnabled) console.warn("STATE CHANGE", prevState, newState);
-
-    if (!!newState.mediaUrl && prevState.mediaUrl !== newState.mediaUrl) {
-      this.renderer.state.ended = false;
-      this.renderer.state.timeStamp = 0;
-      this.renderer.onLoadMedia();
-    }
-
-    this.triggerStateChange(this.renderer.state);
-
-    return this.renderer.state;
+    this.triggerStateChange()
   }
 
   onStateChange(callback) {
-    if (typeof callback !== 'function') return;
-    this.stateChangeCallback = this.stateChangeCallback || [];
-    this.stateChangeCallback.push(callback);
-  }
-
-  triggerStateChange(state) {
-    if (this.stateChangeCallback && this.stateChangeCallback.length > 0)
-      this.stateChangeCallback.forEach(callback => callback(state));
-  }
-
-  render() {
-    if (this.isMounted) {
-      throw new Error('BetaMax has mounted already.');
+    if (typeof callback === 'function') {
+      this.eventsListeners['onStateChange'] = this.eventsListeners['onStateChange'] || []
+      this.eventsListeners['onStateChange'].push(callback)
     }
-    this.isMounted = true;
-    this.bindEvents();
-    this.setInitState(this.renderer.state);
-    this.renderer.render();
+  }
+
+  removeEventListener(callback) {
+    if (this.eventsListeners['onStateChange']) {
+      delete this.eventsListeners['onStateChange']
+    }
+  }
+
+  triggerStateChange(evt) {
+    if (this.eventsListeners['onStateChange']) {
+      let state = this.mediaAPI.getState()
+      this.eventsListeners['onStateChange'].forEach(callback => callback(state))
+    }
+  }
+
+  play() {
+    this.mediaAPI.play()
+  }
+
+  pause() {
+    this.mediaAPI.pause()
+  }
+
+  volume(value) {
+    this.mediaAPI.volume(value)
+  }
+
+  seek(value) {
+    this.mediaAPI.seek(value)
+  }
+
+  requestFullscreen() {
+    this.mediaAPI.requestFullscreen()
+  }
+
+  exitFullscreen() {
+    this.mediaAPI.exitFullscreen()
   }
 }
 
-const BetaMaxCoreFactory = (renderer) => {
-  const betaMaxCore = new BetaMaxCore(renderer);
+const BetaMaxCoreFactory = (options) => {
+  const betaMaxCore = new BetaMaxCore(options)
   return {
-    use: betaMaxCore.use.bind(betaMaxCore),
-    render: betaMaxCore.render.bind(betaMaxCore),
     onStateChange: betaMaxCore.onStateChange.bind(betaMaxCore),
-  };
-};
+    formatTime: formatTime,
+    play: betaMaxCore.play.bind(betaMaxCore),
+    pause: betaMaxCore.pause.bind(betaMaxCore),
+    volume: betaMaxCore.volume.bind(betaMaxCore),
+    seek: betaMaxCore.seek.bind(betaMaxCore),
+    requestFullscreen: betaMaxCore.requestFullscreen.bind(betaMaxCore),
+  }
+}
 
-export { BetaMaxCoreFactory as default, BetaMaxCoreFactory };
+export { BetaMaxCoreFactory as default, BetaMaxCoreFactory }
