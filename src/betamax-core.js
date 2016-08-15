@@ -6,9 +6,22 @@ class BetaMaxCore {
   constructor({ $mediaObj }) {
     // validate the options
     this.eventsListeners = this.eventsListeners || {}
-    this.mediaAPI = this.getMediaAPI($mediaObj)
-    this.state = this.mediaAPI.getState()
+    this.mediaAPI = this.mediaAPI($mediaObj)
+    this.state = this.mediaAPI.state
     this.bindEvents()
+  }
+
+  get api() {
+    return {
+      onStateChange: this.onStateChange.bind(this),
+      play: this.play.bind(this),
+      pause: this.pause.bind(this),
+      volume: this.volume.bind(this),
+      seek: this.seek.bind(this),
+      requestFullscreen: this.requestFullscreen.bind(this),
+      // Utils
+      formatTime: formatTime,
+    }
   }
 
   get events() {
@@ -22,7 +35,7 @@ class BetaMaxCore {
     }
   }
 
-  getMediaAPI($mediaObj) {
+  mediaAPI($mediaObj) {
     let type
     switch ($mediaObj.tagName.toLowerCase()) {
       case 'audio':
@@ -48,21 +61,20 @@ class BetaMaxCore {
 
   onStateChange(callback) {
     if (typeof callback === 'function') {
-      this.eventsListeners['onStateChange'] = this.eventsListeners['onStateChange'] || []
-      this.eventsListeners['onStateChange'].push(callback)
+      this.eventsListeners.onStateChange = this.eventsListeners.onStateChange || []
+      this.eventsListeners.onStateChange.push(callback)
     }
   }
 
   removeEventListener(callback) {
-    if (this.eventsListeners['onStateChange']) {
-      delete this.eventsListeners['onStateChange']
+    if (this.eventsListeners.onStateChange) {
+      delete this.eventsListeners.onStateChange
     }
   }
 
   triggerStateChange(evt) {
-    if (this.eventsListeners['onStateChange']) {
-      let state = this.mediaAPI.getState()
-      this.eventsListeners['onStateChange'].forEach(callback => callback(state))
+    if (this.eventsListeners.onStateChange) {
+      this.eventsListeners.onStateChange.forEach(callback => callback(this.mediaAPI.state))
     }
   }
 
@@ -91,17 +103,6 @@ class BetaMaxCore {
   }
 }
 
-const BetaMaxCoreFactory = (options) => {
-  const betaMaxCore = new BetaMaxCore(options)
-  return {
-    onStateChange: betaMaxCore.onStateChange.bind(betaMaxCore),
-    formatTime: formatTime,
-    play: betaMaxCore.play.bind(betaMaxCore),
-    pause: betaMaxCore.pause.bind(betaMaxCore),
-    volume: betaMaxCore.volume.bind(betaMaxCore),
-    seek: betaMaxCore.seek.bind(betaMaxCore),
-    requestFullscreen: betaMaxCore.requestFullscreen.bind(betaMaxCore),
-  }
-}
+const BetaMaxCoreFactory = (options) => new BetaMaxCore(options).api
 
 export { BetaMaxCoreFactory as default, BetaMaxCoreFactory }

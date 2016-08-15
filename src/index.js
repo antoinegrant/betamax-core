@@ -1,25 +1,44 @@
 import BetaMaxCore from './betamax-core'
 
+// VIDEO //
 const betamaxPlayer = new BetaMaxCore({
   $mediaObj: document.querySelector('#video-example'),
-  // mediaUrl: 'http://localhost:3000/33763_1_out-there-pluto_wg_480p.mp4'
 })
-
-const $playPause = document.getElementById('play-pause');
-const $timeStamp = document.getElementById('timeStamp');
-const $fullScreen = document.getElementById('fullScreen');
+const $videoControls = document.getElementById('video-controls');
+const $videoPlayPause = $videoControls.querySelector('.play-pause');
+const $videoTimeStamp = $videoControls.querySelector('.timeStamp');
+const $videoFullScreen = $videoControls.querySelector('.fullScreen');
 
 betamaxPlayer.onStateChange(state => {
-  $playPause.innerHTML = state.paused ? 'Paused' : 'Playing'
-  $timeStamp.innerHTML = `${betamaxPlayer.formatTime(state.currentTime)} Sec. | ${betamaxPlayer.formatTime(state.duration)} Min.`
+  $videoPlayPause.innerHTML = state.paused ? 'Paused' : 'Playing'
+  $videoTimeStamp.innerHTML = `${betamaxPlayer.formatTime(state.currentTime)} Sec. | ${betamaxPlayer.formatTime(state.duration)} Min.`
 })
 
-// betamaxPlayer.pause()
-betamaxPlayer.volume(0.5)
-betamaxPlayer.seek(500)
-betamaxPlayer.play()
-
-$fullScreen.addEventListener('click', (evt) => {
+$videoFullScreen.addEventListener('click', (evt) => {
   evt.preventDefault()
   betamaxPlayer.requestFullscreen()
 })
+
+// betamaxPlayer.pause()
+betamaxPlayer.volume(0.05)
+// betamaxPlayer.seek(500)
+// betamaxPlayer.play()
+
+
+
+// AUDIO //
+const betamaxAudioPlayer = new BetaMaxCore({
+  $mediaObj: document.querySelector('#audio-example'),
+})
+const $audioControls = document.getElementById('audio-controls');
+const $audioPlayPause = $audioControls.querySelector('.play-pause');
+const $audioTimeStamp = $audioControls.querySelector('.timeStamp');
+
+betamaxAudioPlayer.onStateChange(state => {
+  $audioPlayPause.innerHTML = state.paused ? 'Paused' : 'Playing'
+  $audioTimeStamp.innerHTML = `${betamaxAudioPlayer.formatTime(state.currentTime)} Sec. | ${betamaxAudioPlayer.formatTime(state.duration)} Min.`
+})
+
+// betamaxAudioPlayer.seek(20)
+betamaxAudioPlayer.volume(0.05)
+// betamaxAudioPlayer.play()
