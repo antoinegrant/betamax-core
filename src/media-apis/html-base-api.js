@@ -11,6 +11,7 @@ class BetaMaxHtmlBaseMediaAPI extends BetaMaxBaseMediaAPI {
     this.$mediaObj.addEventListener('timeupdate', (evt) => this.trigger(this.events.TIME_UPDATE, evt))
     this.$mediaObj.addEventListener('ended', (evt) => this.trigger(this.events.ENDED, evt))
     this.$mediaObj.addEventListener('volumechange', (evt) => this.trigger(this.events.VOLUME_CHANGE, evt))
+    this.$mediaObj.addEventListener('loadeddata', (evt) => this.trigger(this.events.LOADED_DATA, evt))
   }
 
   get state() {
@@ -47,30 +48,19 @@ class BetaMaxHtmlBaseMediaAPI extends BetaMaxBaseMediaAPI {
   }
 
   pause() {
-    if (this.$mediaObj.readyState <= 1) {
-      this.pauseAnimationFrameId = window.requestAnimationFrame(() => this.pause())
-    } else {
-      window.cancelAnimationFrame(this.pauseAnimationFrameId)
-      this.$mediaObj.pause()
-    }
+    this.$mediaObj.pause()
   }
 
   volume(value) {
-    if (this.$mediaObj.readyState <= 0) {
-      this.volumeAnimationFrameId = window.requestAnimationFrame(() => this.volume(value))
-    } else {
-      window.cancelAnimationFrame(this.volumeAnimationFrameId)
-      this.$mediaObj.volume = value
-    }
+    this.$mediaObj.volume = value
+  }
+
+  mute() {
+    this.$mediaObj.muted = !this.$mediaObj.muted
   }
 
   seek(value) {
-    if (this.$mediaObj.readyState <= 0) {
-      this.seekAnimationFrameId = window.requestAnimationFrame(() => this.seek(value))
-    } else {
-      window.cancelAnimationFrame(this.seekAnimationFrameId)
-      this.$mediaObj.currentTime = value
-    }
+    this.$mediaObj.currentTime = value
   }
 }
 

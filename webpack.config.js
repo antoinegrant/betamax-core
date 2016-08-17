@@ -5,7 +5,7 @@ var webpack = require('webpack');
 module.exports = {
     name: 'client',
     path: '/src',
-    entry: path.resolve('./src/index.js'),
+    entry: path.resolve('./src/demo.js'),
     output: {
         filename: 'bundle.js',
         path: path.resolve('./dist'),

@@ -1,5 +1,4 @@
 import BetaMaxMediaAPI from './betamax-media-api'
-import { formatTime } from './betamax-utils'
 
 class BetaMaxCore {
 
@@ -7,20 +6,19 @@ class BetaMaxCore {
     // validate the options
     this.eventsListeners = this.eventsListeners || {}
     this.mediaAPI = this.mediaAPI($mediaObj)
-    this.state = this.mediaAPI.state
     this.bindEvents()
   }
 
   get api() {
     return {
-      onStateChange: this.onStateChange.bind(this),
+      addEventListener: this.addEventListener.bind(this),
+      removeEventListener: this.removeEventListener.bind(this),
       play: this.play.bind(this),
       pause: this.pause.bind(this),
       volume: this.volume.bind(this),
+      mute: this.mute.bind(this),
       seek: this.seek.bind(this),
       requestFullscreen: this.requestFullscreen.bind(this),
-      // Utils
-      formatTime: formatTime,
     }
   }
 
@@ -31,7 +29,8 @@ class BetaMaxCore {
       PAUSE: 'pause',
       TIME_UPDATE: 'timeupdate',
       ENDED: 'ended',
-      VOLUME_CHANGE: 'volumechange'
+      VOLUME_CHANGE: 'volumechange',
+      PROGRESS: 'progress',
     }
   }
 
@@ -48,33 +47,38 @@ class BetaMaxCore {
   }
 
   bindEvents() {
-    this.mediaAPI.addEventListener(this.events.PLAY, this.setState.bind(this))
-    this.mediaAPI.addEventListener(this.events.PAUSE, this.setState.bind(this))
-    this.mediaAPI.addEventListener(this.events.STOP, this.setState.bind(this))
-    this.mediaAPI.addEventListener(this.events.TIME_UPDATE, this.setState.bind(this))
-    this.mediaAPI.addEventListener(this.events.VOLUME_CHANGE, this.setState.bind(this))
+    this.mediaAPI.addEventListener(this.events.PLAY,          evt => this.trigger(this.events.PLAY, evt))
+    this.mediaAPI.addEventListener(this.events.PAUSE,         evt => this.trigger(this.events.PAUSE, evt))
+    this.mediaAPI.addEventListener(this.events.STOP,          evt => this.trigger(this.events.STOP, evt))
+    this.mediaAPI.addEventListener(this.events.TIME_UPDATE,   evt => this.trigger(this.events.TIME_UPDATE, evt))
+    this.mediaAPI.addEventListener(this.events.VOLUME_CHANGE, evt => this.trigger(this.events.VOLUME_CHANGE, evt))
+    this.mediaAPI.addEventListener(this.events.LOADED_DATA,   evt => this.trigger(this.events.LOADED_DATA, evt))
   }
 
-  setState(newState) {
-    this.triggerStateChange()
-  }
-
-  onStateChange(callback) {
+  addEventListener(eventName, callback) {
     if (typeof callback === 'function') {
-      this.eventsListeners.onStateChange = this.eventsListeners.onStateChange || []
-      this.eventsListeners.onStateChange.push(callback)
+      this.eventsListeners[eventName] = this.eventsListeners[eventName] || []
+      this.eventsListeners[eventName].push(callback)
     }
   }
 
-  removeEventListener(callback) {
-    if (this.eventsListeners.onStateChange) {
-      delete this.eventsListeners.onStateChange
+  removeEventListener(eventName, callback) {
+    if (this.eventsListeners[eventName]) {
+      delete this.eventsListeners[eventName]
     }
   }
 
-  triggerStateChange(evt) {
-    if (this.eventsListeners.onStateChange) {
-      this.eventsListeners.onStateChange.forEach(callback => callback(this.mediaAPI.state))
+  trigger(eventName, evt) {
+    if (this.eventsListeners[eventName]) {
+      let eventObj = {
+        type: evt.type,
+        currentTime: this.mediaAPI.state.currentTime,
+        volume: this.mediaAPI.state.volume,
+      }
+      this.eventsListeners[eventName].forEach(callback => callback(eventObj))
+    }
+    if (this.eventsListeners.stateChange.length > 0 && typeof this.eventsListeners.stateChange[0] === 'function') {
+      this.eventsListeners.stateChange[0](this.mediaAPI.state)
     }
   }
 
@@ -88,6 +92,10 @@ class BetaMaxCore {
 
   volume(value) {
     this.mediaAPI.volume(value)
+  }
+
+  mute() {
+    this.mediaAPI.mute()
   }
 
   seek(value) {
