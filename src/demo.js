@@ -1,7 +1,7 @@
 import BetaMaxCore, { utils } from './'
 
 // VIDEO //
-const betamaxPlayer = new BetaMaxCore({
+const betamaxVideoPlayer = new BetaMaxCore({
   $mediaObj: document.querySelector('#video-example'),
 })
 const $videoControls = document.getElementById('video-controls');
@@ -10,30 +10,30 @@ const $videoTimeStamp = $videoControls.querySelector('.timeStamp');
 const $videoFullScreen = $videoControls.querySelector('.fullScreen');
 const $videoMute = $videoControls.querySelector('.mute');
 
-betamaxPlayer.addEventListener('stateChange', state => {
+betamaxVideoPlayer.addEventListener('stateChange', state => {
   console.warn("State Change");
   $videoPlayPause.innerHTML = state.paused ? 'Paused' : 'Playing'
   $videoTimeStamp.innerHTML = `${utils.formatTime(state.currentTime)} Sec.`
   if (state.duration) {
     $videoTimeStamp.innerHTML += ` | ${utils.formatTime(state.duration)} Min.`
   }
-  $videoMute.innerHTML = state.volume > 0 ? 'Mute' : 'Muted'
+  $videoMute.innerHTML = state.muted ? 'Muted' : 'Mute'
 })
 
 $videoFullScreen.addEventListener('click', (evt) => {
   evt.preventDefault()
-  betamaxPlayer.requestFullscreen()
+  betamaxVideoPlayer.requestFullscreen()
 })
 $videoMute.addEventListener('click', (evt) => {
   evt.preventDefault()
-  betamaxPlayer.mute()
+  betamaxVideoPlayer.mute()
 })
 
-// betamaxPlayer.pause()
-// betamaxPlayer.volume(0.05)
-// betamaxPlayer.mute()
-// betamaxPlayer.seek(0.4)
-// betamaxPlayer.play()
+// betamaxVideoPlayer.pause()
+// betamaxVideoPlayer.volume(0.05)
+// betamaxVideoPlayer.mute()
+// betamaxVideoPlayer.seek(240)
+// betamaxVideoPlayer.play()
 
 
 
