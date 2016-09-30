@@ -5,6 +5,7 @@ class BetaMaxCore {
   constructor({ $mediaObj }) {
     // validate the options
     this.eventsListeners = this.eventsListeners || {}
+    this.eventMiddlewares = this.eventMiddlewares || []
     this.mediaAPI = this.mediaAPI($mediaObj)
     this.bindEvents()
   }
@@ -18,7 +19,8 @@ class BetaMaxCore {
       volume: this.volume,
       mute: this.mute,
       seek: this.seek,
-      requestFullscreen: this.requestFullscreen.bind(this),
+      requestFullscreen: this.requestFullscreen,
+      useEventMiddleware: this.useEventMiddleware,
     }
   }
 
@@ -69,12 +71,24 @@ class BetaMaxCore {
   }
 
   trigger(eventName, eventObj) {
+
+    this.eventMiddlewares.forEach(eventMiddleware => eventMiddleware({
+      type: eventObj.type,
+      api: this.api,
+      state: this.mediaAPI.state
+    }));
+
     if (this.eventsListeners[eventName]) {
       this.eventsListeners[eventName].forEach(callback => callback(eventObj))
     }
+
     if (this.eventsListeners.stateChange.length > 0 && typeof this.eventsListeners.stateChange[0] === 'function') {
       this.eventsListeners.stateChange[0](this.mediaAPI.state)
     }
+  }
+
+  useEventMiddleware = (eventMiddleware) => {
+    this.eventMiddlewares.push(eventMiddleware);
   }
 }
 
