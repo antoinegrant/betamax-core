@@ -26,15 +26,19 @@
     $mediaObj: document.querySelector('#video-example')
   });
 
-  betamaxVideoPlayer.useEventMiddleware(function (obj) {
-    switch (obj.type) {
+  betamaxVideoPlayer.useEventMiddleware(function (_ref) {
+    var type = _ref.type;
+    var api = _ref.api;
+    var state = _ref.state;
+
+    switch (type) {
       case 'loadeddata':
-        obj.api.play();
+        api.play();
         break;
       case 'timeupdate':
-        if (!obj.state.muted && obj.state.currentTime > 2) {
-          obj.api.mute();
-          // obj.api.pause();
+        if (!state.muted && state.currentTime > 2) {
+          api.mute();
+          api.seek(240);
         }
         break;
       default:
