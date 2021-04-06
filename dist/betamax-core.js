@@ -144,12 +144,6 @@
       value: function trigger(eventName, eventObj) {
         var _this3 = this;
 
-        if (this.eventsListeners[eventName]) {
-          this.eventsListeners[eventName].forEach(function (callback) {
-            return callback(eventObj);
-          });
-        }
-
         this.eventMiddlewares.forEach(function (eventMiddleware) {
           return eventMiddleware({
             type: eventObj.type,
@@ -157,6 +151,12 @@
             state: _this3.mediaAPI.state
           });
         });
+
+        if (this.eventsListeners[eventName]) {
+          this.eventsListeners[eventName].forEach(function (callback) {
+            return callback(eventObj);
+          });
+        }
 
         if (this.eventsListeners.stateChange.length > 0 && typeof this.eventsListeners.stateChange[0] === 'function') {
           this.eventsListeners.stateChange[0](this.mediaAPI.state);
