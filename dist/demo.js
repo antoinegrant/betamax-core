@@ -22,39 +22,56 @@
   }
 
   // VIDEO //
-  var betamaxPlayer = new _2.default({
+  var betamaxVideoPlayer = new _2.default({
     $mediaObj: document.querySelector('#video-example')
   });
+
+  betamaxVideoPlayer.useEventMiddleware(function (obj) {
+    switch (obj.type) {
+      case 'loadeddata':
+        obj.api.play();
+        break;
+      case 'timeupdate':
+        if (!obj.state.muted && obj.state.currentTime > 2) {
+          obj.api.mute();
+          // obj.api.pause();
+        }
+        break;
+      default:
+
+    }
+  });
+
   var $videoControls = document.getElementById('video-controls');
   var $videoPlayPause = $videoControls.querySelector('.play-pause');
   var $videoTimeStamp = $videoControls.querySelector('.timeStamp');
   var $videoFullScreen = $videoControls.querySelector('.fullScreen');
   var $videoMute = $videoControls.querySelector('.mute');
 
-  betamaxPlayer.addEventListener('stateChange', function (state) {
+  betamaxVideoPlayer.addEventListener('stateChange', function (state) {
     console.warn("State Change");
     $videoPlayPause.innerHTML = state.paused ? 'Paused' : 'Playing';
     $videoTimeStamp.innerHTML = _.utils.formatTime(state.currentTime) + ' Sec.';
     if (state.duration) {
       $videoTimeStamp.innerHTML += ' | ' + _.utils.formatTime(state.duration) + ' Min.';
     }
-    $videoMute.innerHTML = state.volume > 0 ? 'Mute' : 'Muted';
+    $videoMute.innerHTML = state.muted ? 'Muted' : 'Mute';
   });
 
   $videoFullScreen.addEventListener('click', function (evt) {
     evt.preventDefault();
-    betamaxPlayer.requestFullscreen();
+    betamaxVideoPlayer.requestFullscreen();
   });
   $videoMute.addEventListener('click', function (evt) {
     evt.preventDefault();
-    betamaxPlayer.mute();
+    betamaxVideoPlayer.mute();
   });
 
-  // betamaxPlayer.pause()
-  // betamaxPlayer.volume(0.05)
-  // betamaxPlayer.mute()
-  // betamaxPlayer.seek(0.4)
-  // betamaxPlayer.play()
+  // betamaxVideoPlayer.pause()
+  // betamaxVideoPlayer.volume(0.05)
+  // betamaxVideoPlayer.mute()
+  // betamaxVideoPlayer.seek(240)
+  // betamaxVideoPlayer.play()
 
 
   // AUDIO //

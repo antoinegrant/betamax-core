@@ -4,6 +4,23 @@ import BetaMaxCore, { utils } from './'
 const betamaxVideoPlayer = new BetaMaxCore({
   $mediaObj: document.querySelector('#video-example'),
 })
+
+betamaxVideoPlayer.useEventMiddleware(({ type, api, state }) => {
+  switch (type) {
+    case 'loadeddata':
+      api.play();
+      break;
+    case 'timeupdate':
+      if (!state.muted && state.currentTime > 2) {
+        api.mute();
+        api.seek(240);
+      }
+      break;
+    default:
+
+  }
+});
+
 const $videoControls = document.getElementById('video-controls');
 const $videoPlayPause = $videoControls.querySelector('.play-pause');
 const $videoTimeStamp = $videoControls.querySelector('.timeStamp');

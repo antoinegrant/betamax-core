@@ -52,12 +52,60 @@
 
   var BetaMaxCore = function () {
     function BetaMaxCore(_ref) {
+      var _this = this;
+
       var $mediaObj = _ref.$mediaObj;
 
       _classCallCheck(this, BetaMaxCore);
 
+      this.play = function () {
+        return _this.mediaAPI.play();
+      };
+
+      this.pause = function () {
+        return _this.mediaAPI.pause();
+      };
+
+      this.volume = function (value) {
+        return _this.mediaAPI.volume(value);
+      };
+
+      this.mute = function () {
+        return _this.mediaAPI.mute();
+      };
+
+      this.seek = function (value) {
+        return _this.mediaAPI.seek(value);
+      };
+
+      this.requestFullscreen = function () {
+        return _this.mediaAPI.requestFullscreen();
+      };
+
+      this.exitFullscreen = function () {
+        return _this.mediaAPI.exitFullscreen();
+      };
+
+      this.addEventListener = function (eventName, callback) {
+        if (typeof callback === 'function') {
+          _this.eventsListeners[eventName] = _this.eventsListeners[eventName] || [];
+          _this.eventsListeners[eventName].push(callback);
+        }
+      };
+
+      this.removeEventListener = function (eventName, callback) {
+        if (_this.eventsListeners[eventName]) {
+          delete _this.eventsListeners[eventName];
+        }
+      };
+
+      this.useEventMiddleware = function (eventMiddleware) {
+        _this.eventMiddlewares.push(eventMiddleware);
+      };
+
       // validate the options
       this.eventsListeners = this.eventsListeners || {};
+      this.eventMiddlewares = this.eventMiddlewares || [];
       this.mediaAPI = this.mediaAPI($mediaObj);
       this.bindEvents();
     }
@@ -65,123 +113,68 @@
     _createClass(BetaMaxCore, [{
       key: 'mediaAPI',
       value: function mediaAPI($mediaObj) {
-        var type = void 0;
-        switch ($mediaObj.tagName.toLowerCase()) {
-          case 'audio':
-            type = 'audio';
-            break;
-          default:
-            type = 'video';
-        }
-        return new _betamaxMediaApi2.default({ type: type, $mediaObj: $mediaObj, events: this.events });
+        return new _betamaxMediaApi2.default({ $mediaObj: $mediaObj, events: this.events });
       }
     }, {
       key: 'bindEvents',
       value: function bindEvents() {
-        var _this = this;
+        var _this2 = this;
 
         this.mediaAPI.addEventListener(this.events.PLAY, function (evt) {
-          return _this.trigger(_this.events.PLAY, evt);
+          return _this2.trigger(_this2.events.PLAY, evt);
         });
         this.mediaAPI.addEventListener(this.events.PAUSE, function (evt) {
-          return _this.trigger(_this.events.PAUSE, evt);
+          return _this2.trigger(_this2.events.PAUSE, evt);
         });
         this.mediaAPI.addEventListener(this.events.STOP, function (evt) {
-          return _this.trigger(_this.events.STOP, evt);
+          return _this2.trigger(_this2.events.STOP, evt);
         });
         this.mediaAPI.addEventListener(this.events.TIME_UPDATE, function (evt) {
-          return _this.trigger(_this.events.TIME_UPDATE, evt);
+          return _this2.trigger(_this2.events.TIME_UPDATE, evt);
         });
         this.mediaAPI.addEventListener(this.events.VOLUME_CHANGE, function (evt) {
-          return _this.trigger(_this.events.VOLUME_CHANGE, evt);
+          return _this2.trigger(_this2.events.VOLUME_CHANGE, evt);
         });
         this.mediaAPI.addEventListener(this.events.LOADED_DATA, function (evt) {
-          return _this.trigger(_this.events.LOADED_DATA, evt);
+          return _this2.trigger(_this2.events.LOADED_DATA, evt);
         });
-      }
-    }, {
-      key: 'addEventListener',
-      value: function addEventListener(eventName, callback) {
-        if (typeof callback === 'function') {
-          this.eventsListeners[eventName] = this.eventsListeners[eventName] || [];
-          this.eventsListeners[eventName].push(callback);
-        }
-      }
-    }, {
-      key: 'removeEventListener',
-      value: function removeEventListener(eventName, callback) {
-        if (this.eventsListeners[eventName]) {
-          delete this.eventsListeners[eventName];
-        }
       }
     }, {
       key: 'trigger',
-      value: function trigger(eventName, evt) {
-        var _this2 = this;
+      value: function trigger(eventName, eventObj) {
+        var _this3 = this;
 
         if (this.eventsListeners[eventName]) {
-          (function () {
-            var eventObj = {
-              type: evt.type,
-              currentTime: _this2.mediaAPI.state.currentTime,
-              volume: _this2.mediaAPI.state.volume
-            };
-            _this2.eventsListeners[eventName].forEach(function (callback) {
-              return callback(eventObj);
-            });
-          })();
+          this.eventsListeners[eventName].forEach(function (callback) {
+            return callback(eventObj);
+          });
         }
+
+        this.eventMiddlewares.forEach(function (eventMiddleware) {
+          return eventMiddleware({
+            type: eventObj.type,
+            api: _this3.api,
+            state: _this3.mediaAPI.state
+          });
+        });
+
         if (this.eventsListeners.stateChange.length > 0 && typeof this.eventsListeners.stateChange[0] === 'function') {
           this.eventsListeners.stateChange[0](this.mediaAPI.state);
         }
       }
     }, {
-      key: 'play',
-      value: function play() {
-        this.mediaAPI.play();
-      }
-    }, {
-      key: 'pause',
-      value: function pause() {
-        this.mediaAPI.pause();
-      }
-    }, {
-      key: 'volume',
-      value: function volume(value) {
-        this.mediaAPI.volume(value);
-      }
-    }, {
-      key: 'mute',
-      value: function mute() {
-        this.mediaAPI.mute();
-      }
-    }, {
-      key: 'seek',
-      value: function seek(value) {
-        this.mediaAPI.seek(value);
-      }
-    }, {
-      key: 'requestFullscreen',
-      value: function requestFullscreen() {
-        this.mediaAPI.requestFullscreen();
-      }
-    }, {
-      key: 'exitFullscreen',
-      value: function exitFullscreen() {
-        this.mediaAPI.exitFullscreen();
-      }
-    }, {
       key: 'api',
       get: function get() {
         return {
-          addEventListener: this.addEventListener.bind(this),
-          removeEventListener: this.removeEventListener.bind(this),
-          play: this.play.bind(this),
-          pause: this.pause.bind(this),
-          volume: this.volume.bind(this),
-          mute: this.mute.bind(this),
-          seek: this.seek.bind(this),
-          requestFullscreen: this.requestFullscreen.bind(this)
+          addEventListener: this.addEventListener,
+          removeEventListener: this.removeEventListener,
+          play: this.play,
+          pause: this.pause,
+          volume: this.volume,
+          mute: this.mute,
+          seek: this.seek,
+          requestFullscreen: this.requestFullscreen,
+          useEventMiddleware: this.useEventMiddleware
         };
       }
     }, {
